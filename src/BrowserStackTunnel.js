@@ -1,7 +1,7 @@
 var util = require('util'),
     fs = require('fs'),
     EventEmitter = require('events').EventEmitter,
-    spawn = require('child_process').spawn,
+    spawn = require('child_process').execFile,
     os = require('os'),
     ZipBinary = require('./ZipBinary'),
     debug = require('diagnostics')('browserstacktunnel-wrapper');
