@@ -122,7 +122,13 @@ function BrowserStackTunnel(options) {
         debug('BrowserStackTunnel.state: %s', state);
 
         this.state = state;
-        this.emit(state, null);
+        if (this.state === 'started') {
+          setTimeout(function () {
+            this.emit(state, null);
+          }.bind(this), 10000);
+        } else {
+          this.emit(state, null);
+        }
         break;
       }
     }
