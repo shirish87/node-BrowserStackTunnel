@@ -45,6 +45,7 @@
     "child_process"
   ],
   "dependencies": {
+    "diagnostics": "^1.0.1",
     "unzip": "~0.1.9"
   }
 }

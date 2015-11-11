@@ -3,10 +3,13 @@ var util = require('util'),
     EventEmitter = require('events').EventEmitter,
     spawn = require('child_process').spawn,
     os = require('os'),
-    ZipBinary = require('./ZipBinary');
+    ZipBinary = require('./ZipBinary'),
+    debug = require('diagnostics')('browserstacktunnel-wrapper');
 
 function BrowserStackTunnel(options) {
   'use strict';
+  debug('BrowserStackTunnel.options', options);
+
   var params = [];
 
   var binary;
@@ -28,6 +31,8 @@ function BrowserStackTunnel(options) {
     binary = new ZipBinary('win32', null, options.win32Bin, 'exe');
     break;
   }
+
+  debug('os.platform: %s, os.arch: %s', os.platform(), os.arch());
 
   this.stdoutData = '';
   this.tunnel = null;
@@ -114,6 +119,8 @@ function BrowserStackTunnel(options) {
     this.stdoutData += data.toString();
     for (state in this.stateMatchers) {
       if (this.stateMatchers.hasOwnProperty(state) && this.stateMatchers[state].test(this.stdoutData) && this.state !== state) {
+        debug('BrowserStackTunnel.state: %s', state);
+
         this.state = state;
         this.emit(state, null);
         break;
@@ -122,6 +129,8 @@ function BrowserStackTunnel(options) {
   };
 
   this.killTunnel = function () {
+    debug('BrowserStackTunnel.killTunnel');
+
     if (this.tunnel) {
       this.tunnel.stdout.removeAllListeners('data');
       this.tunnel.stderr.removeAllListeners('data');
@@ -132,6 +141,8 @@ function BrowserStackTunnel(options) {
   };
 
   this.exit = function () {
+    debug('BrowserStackTunnel.exit');
+
     if (this.state !== 'started' && this.state !== 'newer_available') {
       this.emit('started', new Error('child failed to start:\n' + this.stdoutData));
     } else if (this.state !== 'newer_available') {
@@ -141,13 +152,19 @@ function BrowserStackTunnel(options) {
   };
 
   this.cleanUp = function () {
+    debug('BrowserStackTunnel.cleanUp');
+
     this.stdoutData = '';
     process.removeListener('uncaughtException', this.exit.bind(this));
   };
 
   this._startTunnel = function () {
     this.cleanUp();
-    this.tunnel = spawn(binary.command, binary.args.concat([options.key]).concat(params));
+
+    var binaryArgs = binary.args.concat([options.key]).concat(params);
+    debug('BrowserStackTunnel._startTunnel: %s <key> %j', binary.command, binaryArgs.slice(1));
+
+    this.tunnel = spawn(binary.command, binaryArgs);
     this.tunnel.stdout.on('data', this.updateState.bind(this));
     this.tunnel.stderr.on('data', this.updateState.bind(this));
     this.tunnel.on('error', this.killTunnel.bind(this));
@@ -169,6 +186,8 @@ function BrowserStackTunnel(options) {
   };
 
   this.start = function (callback) {
+    debug('BrowserStackTunnel.start');
+
     this.once('started', callback);
     if (this.state === 'started') {
       this.emit('already_running');
@@ -178,6 +197,8 @@ function BrowserStackTunnel(options) {
   };
 
   this.stop = function (callback) {
+    debug('BrowserStackTunnel.stop');
+
     var listenerCount = (typeof this.listenerCount !== 'undefined') ? this.listenerCount('stop') : EventEmitter.listenerCount(this, 'stop');
     if (this.state !== 'stop' && listenerCount === 0) {
       this.once('stop', callback);
