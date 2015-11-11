@@ -8,7 +8,6 @@ var util = require('util'),
 
 function BrowserStackTunnel(options) {
   'use strict';
-  debug('BrowserStackTunnel.options', options);
 
   var params = [];
 
